@@ -127,6 +127,8 @@ class BaseTracker(ABC):
                 # Mark that the first frame setup has been done
                 self._first_frame_processed = True
 
+            
+
             # Call the original method (e.g., update)
             return method(self, *args, **kwargs)
         

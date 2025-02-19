@@ -233,7 +233,7 @@ class OcSort(BaseTracker):
 
     @BaseTracker.setup_decorator
     @BaseTracker.per_class_decorator
-    def update(self, dets: np.ndarray, img: np.ndarray, embs: np.ndarray = None) -> np.ndarray:
+    def update(self, dets: np.ndarray, img: np.ndarray,target_player_id: int = 0, embs: np.ndarray = None,) -> np.ndarray:
         """
         Params:
           dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
@@ -264,7 +264,13 @@ class OcSort(BaseTracker):
         trks = np.zeros((len(self.active_tracks), 5+self.is_obb))
         to_del = []
         ret = []
+
+
         for t, trk in enumerate(trks):
+            # Just keep the target player for tracking
+            if t != target_player_id: #
+                to_del.append(t)#
+                continue #
             pos = self.active_tracks[t].predict()[0]
             trk[:] = [pos[i] for i in range(4+self.is_obb)] + [0]
             if np.any(np.isnan(pos)):
@@ -297,6 +303,8 @@ class OcSort(BaseTracker):
         for m in matched:
             self.active_tracks[m[1]].update(dets[m[0], :-2], dets[m[0], -2], dets[m[0], -1])
 
+
+        unmatched_trks = np.array([i for i in unmatched_trks if i not in to_del]) #
         """
             Second round of associaton by OCR
         """
@@ -326,7 +334,8 @@ class OcSort(BaseTracker):
                 unmatched_trks = np.setdiff1d(
                     unmatched_trks, np.array(to_remove_trk_indices)
                 )
-
+        #active_tracks = self.active_tracks
+        
         if unmatched_dets.shape[0] > 0 and unmatched_trks.shape[0] > 0:
             left_dets = dets[unmatched_dets]
             left_trks = last_boxes[unmatched_trks]
